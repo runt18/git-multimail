@@ -357,7 +357,7 @@ class CommandError(Exception):
         self.retcode = retcode
         Exception.__init__(
             self,
-            'Command "%s" failed with retcode %s' % (' '.join(cmd), retcode,)
+            'Command "{0!s}" failed with retcode {1!s}'.format(' '.join(cmd), retcode)
             )
 
 
@@ -390,7 +390,7 @@ def choose_git_command():
             # do it.
             cmd = [GIT_EXECUTABLE, '-c', 'foo.bar=baz', '--version']
             read_output(cmd)
-            GIT_CMD = [GIT_EXECUTABLE, '-c', 'i18n.logoutputencoding=%s' % (ENCODING,)]
+            GIT_CMD = [GIT_EXECUTABLE, '-c', 'i18n.logoutputencoding={0!s}'.format(ENCODING)]
         except CommandError:
             GIT_CMD = [GIT_EXECUTABLE]
 
@@ -557,7 +557,7 @@ class Config(object):
     def get(self, name, default=None):
         try:
             values = self._split(read_git_output(
-                ['config', '--get', '--null', '%s.%s' % (self.section, name)],
+                ['config', '--get', '--null', '{0!s}.{1!s}'.format(self.section, name)],
                 env=self.env, keepends=True,
                 ))
             assert len(values) == 1
@@ -568,7 +568,7 @@ class Config(object):
     def get_bool(self, name, default=None):
         try:
             value = read_git_output(
-                ['config', '--get', '--bool', '%s.%s' % (self.section, name)],
+                ['config', '--get', '--bool', '{0!s}.{1!s}'.format(self.section, name)],
                 env=self.env,
                 )
         except CommandError:
@@ -583,7 +583,7 @@ class Config(object):
 
         try:
             return self._split(read_git_output(
-                ['config', '--get-all', '--null', '%s.%s' % (self.section, name)],
+                ['config', '--get-all', '--null', '{0!s}.{1!s}'.format(self.section, name)],
                 env=self.env, keepends=True,
                 ))
         except CommandError:
@@ -597,13 +597,13 @@ class Config(object):
 
     def set(self, name, value):
         read_git_output(
-            ['config', '%s.%s' % (self.section, name), value],
+            ['config', '{0!s}.{1!s}'.format(self.section, name), value],
             env=self.env,
             )
 
     def add(self, name, value):
         read_git_output(
-            ['config', '--add', '%s.%s' % (self.section, name), value],
+            ['config', '--add', '{0!s}.{1!s}'.format(self.section, name), value],
             env=self.env,
             )
 
@@ -618,7 +618,7 @@ class Config(object):
     def unset_all(self, name):
         try:
             read_git_output(
-                ['config', '--unset-all', '%s.%s' % (self.section, name)],
+                ['config', '--unset-all', '{0!s}.{1!s}'.format(self.section, name)],
                 env=self.env,
                 )
         except CommandError:
@@ -656,7 +656,7 @@ def limit_lines(lines, max_lines):
             yield line
 
     if index >= max_lines:
-        yield '... %d lines suppressed ...\n' % (index + 1 - max_lines,)
+        yield '... {0:d} lines suppressed ...\n'.format(index + 1 - max_lines)
 
 
 def limit_linelength(lines, max_linelength):
@@ -700,7 +700,7 @@ class GitObject(object):
             elif self.type == 'tag':
                 try:
                     self.commit_sha1 = read_git_output(
-                        ['rev-parse', '--verify', '%s^0' % (self.sha1,)]
+                        ['rev-parse', '--verify', '{0!s}^0'.format(self.sha1)]
                         )
                 except CommandError:
                     # Cannot deref tag to determine commit_sha1
@@ -831,7 +831,7 @@ class Change(object):
                     value = addr_header_encode(value, name)
                 else:
                     value = header_encode(value, name)
-                for splitline in ('%s: %s\n' % (name, value)).splitlines(True):
+                for splitline in ('{0!s}: {1!s}\n'.format(name, value)).splitlines(True):
                     yield splitline
 
     def generate_email_header(self):
@@ -954,7 +954,7 @@ class Change(object):
                     # whole line. The newline must be inside the span
                     # to display properly both in Firefox and in
                     # text-based browser.
-                    line = "<span style='%s'>%s\n</span>" % (style, line)
+                    line = "<span style='{0!s}'>{1!s}\n</span>".format(style, line)
                 else:
                     line = line + '\n'
 
@@ -990,7 +990,7 @@ class Revision(Change):
             self.cc_recipients = ', '.join(to.strip() for to in self._cc_recipients())
             if self.cc_recipients:
                 self.environment.log_msg(
-                    'Add %s to CC for %s\n' % (self.cc_recipients, self.rev.sha1))
+                    'Add {0!s} to CC for {1!s}\n'.format(self.cc_recipients, self.rev.sha1))
 
     def _cc_recipients(self):
         cc_recipients = []
@@ -1273,8 +1273,8 @@ class ReferenceChange(Change):
                     if not has_newold:
                         has_newold = True
                         yield '\n'
-                        yield 'Graph of %s commits:\n\n' % (
-                            {'new': 'new', 'old': 'discarded'}[newold],)
+                        yield 'Graph of {0!s} commits:\n\n'.format(
+                            {'new': 'new', 'old': 'discarded'}[newold])
                     yield '  ' + line
                 if has_newold:
                     yield '\n'
@@ -1344,15 +1344,14 @@ class ReferenceChange(Change):
             # revisions in the summary even though we will not send
             # new notification emails for them.
             adds = list(generate_summaries(
-                '--topo-order', '--reverse', '%s..%s'
-                % (self.old.commit_sha1, self.new.commit_sha1,)
+                '--topo-order', '--reverse', '{0!s}..{1!s}'.format(self.old.commit_sha1, self.new.commit_sha1)
                 ))
 
             # List of the revisions that were removed from the branch
             # by this update.  This will be empty except for
             # non-fast-forward updates.
             discards = list(generate_summaries(
-                '%s..%s' % (self.new.commit_sha1, self.old.commit_sha1,)
+                '{0!s}..{1!s}'.format(self.new.commit_sha1, self.old.commit_sha1)
                 ))
 
             if adds:
@@ -1443,7 +1442,7 @@ class ReferenceChange(Change):
             for line in read_git_lines(
                     ['diff-tree'] +
                     self.diffopts +
-                    ['%s..%s' % (self.old.commit_sha1, self.new.commit_sha1,)],
+                    ['{0!s}..{1!s}'.format(self.old.commit_sha1, self.new.commit_sha1)],
                     keepends=True,
                     ):
                 yield line
@@ -1567,7 +1566,7 @@ class BranchChange(ReferenceChange):
                 for line in read_git_lines(
                     [
                         'log', '-3', '--format=%H %P',
-                        '%s..%s' % (self.old.sha1, self.new.sha1),
+                        '{0!s}..{1!s}'.format(self.old.sha1, self.new.sha1),
                         ]
                     )
                 ]
@@ -1647,8 +1646,7 @@ class BranchChange(ReferenceChange):
         # some info from the refchange portion, and then call the revision
         # generate_email_body function to handle the revision portion.
         adds = list(generate_summaries(
-            '--topo-order', '--reverse', '%s..%s'
-            % (self.old.commit_sha1, self.new.commit_sha1,)
+            '--topo-order', '--reverse', '{0!s}..{1!s}'.format(self.old.commit_sha1, self.new.commit_sha1)
             ))
 
         yield self.expand("The following commit(s) were added to %(refname)s by this push:\n")
@@ -1690,29 +1688,29 @@ class AnnotatedTagChange(ReferenceChange):
         # Use git for-each-ref to pull out the individual fields from
         # the tag
         [tagobject, tagtype, tagger, tagged] = read_git_lines(
-            ['for-each-ref', '--format=%s' % (self.ANNOTATED_TAG_FORMAT,), self.refname],
+            ['for-each-ref', '--format={0!s}'.format(self.ANNOTATED_TAG_FORMAT), self.refname],
             )
 
         yield self.expand(
             BRIEF_SUMMARY_TEMPLATE, action='tagging',
-            rev_short=tagobject, text='(%s)' % (tagtype,),
+            rev_short=tagobject, text='({0!s})'.format(tagtype),
             )
         if tagtype == 'commit':
             # If the tagged object is a commit, then we assume this is a
             # release, and so we calculate which tag this tag is
             # replacing
             try:
-                prevtag = read_git_output(['describe', '--abbrev=0', '%s^' % (self.new,)])
+                prevtag = read_git_output(['describe', '--abbrev=0', '{0!s}^'.format(self.new)])
             except CommandError:
                 prevtag = None
             if prevtag:
-                yield '  replaces  %s\n' % (prevtag,)
+                yield '  replaces  {0!s}\n'.format(prevtag)
         else:
             prevtag = None
-            yield '    length  %s bytes\n' % (read_git_output(['cat-file', '-s', tagobject]),)
+            yield '    length  {0!s} bytes\n'.format(read_git_output(['cat-file', '-s', tagobject]))
 
-        yield ' tagged by  %s\n' % (tagger,)
-        yield '        on  %s\n' % (tagged,)
+        yield ' tagged by  {0!s}\n'.format(tagger)
+        yield '        on  {0!s}\n'.format(tagged)
         yield '\n'
 
         # Show the content of the tag message; this might contain a
@@ -1732,14 +1730,14 @@ class AnnotatedTagChange(ReferenceChange):
             if prevtag:
                 # Show changes since the previous release
                 revlist = read_git_output(
-                    ['rev-list', '--pretty=short', '%s..%s' % (prevtag, self.new,)],
+                    ['rev-list', '--pretty=short', '{0!s}..{1!s}'.format(prevtag, self.new)],
                     keepends=True,
                     )
             else:
                 # No previous tag, show all the changes since time
                 # began
                 revlist = read_git_output(
-                    ['rev-list', '--pretty=short', '%s' % (self.new,)],
+                    ['rev-list', '--pretty=short', '{0!s}'.format(self.new)],
                     keepends=True,
                     )
             for line in read_git_lines(['shortlog'], input=revlist, keepends=True):
@@ -1884,8 +1882,8 @@ class SendMailer(Mailer):
             p = subprocess.Popen(self.command, stdin=subprocess.PIPE)
         except OSError:
             sys.stderr.write(
-                '*** Cannot execute command: %s\n' % ' '.join(self.command) +
-                '*** %s\n' % sys.exc_info()[1] +
+                '*** Cannot execute command: {0!s}\n'.format(' '.join(self.command)) +
+                '*** {0!s}\n'.format(sys.exc_info()[1]) +
                 '*** Try setting multimailhook.mailer to "smtp"\n' +
                 '*** to send emails without using the sendmail command.\n'
                 )
@@ -1960,14 +1958,12 @@ class SMTPMailer(Mailer):
                 sys.exit(1)
             if self.smtpserverdebuglevel > 0:
                 sys.stdout.write(
-                    "*** Setting debug on for SMTP server connection (%s) ***\n"
-                    % self.smtpserverdebuglevel)
+                    "*** Setting debug on for SMTP server connection ({0!s}) ***\n".format(self.smtpserverdebuglevel))
                 self.smtp.set_debuglevel(self.smtpserverdebuglevel)
         except Exception:
             sys.stderr.write(
-                '*** Error establishing SMTP connection to %s ***\n'
-                % self.smtpserver)
-            sys.stderr.write('*** %s\n' % sys.exc_info()[1])
+                '*** Error establishing SMTP connection to {0!s} ***\n'.format(self.smtpserver))
+            sys.stderr.write('*** {0!s}\n'.format(sys.exc_info()[1]))
             sys.exit(1)
 
     def __del__(self):
@@ -1985,7 +1981,7 @@ class SMTPMailer(Mailer):
             self.smtp.sendmail(self.envelopesender, to_addrs, msg)
         except Exception:
             sys.stderr.write('*** Error sending email ***\n')
-            sys.stderr.write('*** %s\n' % sys.exc_info()[1])
+            sys.stderr.write('*** {0!s}\n'.format(sys.exc_info()[1]))
             self.smtp.quit()
             sys.exit(1)
 
@@ -2261,7 +2257,7 @@ class Environment(object):
             values = {}
 
             for key in self.COMPUTED_KEYS:
-                value = getattr(self, 'get_%s' % (key,))()
+                value = getattr(self, 'get_{0!s}'.format(key))()
                 if value is not None:
                     values[key] = value
 
@@ -2367,7 +2363,7 @@ class ConfigOptionsEnvironmentMixin(ConfigEnvironmentMixin):
         for forbidden_val in forbidden:
             if value is not None and value.lower() == forbidden:
                 raise ConfigurationException(
-                    '"%s" is not an allowed setting for %s' % (value, name)
+                    '"{0!s}" is not an allowed setting for {1!s}'.format(value, name)
                     )
 
     def __init__(self, config, **kw):
@@ -2390,8 +2386,8 @@ class ConfigOptionsEnvironmentMixin(ConfigEnvironmentMixin):
         if commit_email_format is not None:
             if commit_email_format != "html" and commit_email_format != "text":
                 self.log_warning(
-                    '*** Unknown value for multimailhook.commitEmailFormat: %s\n' %
-                    commit_email_format +
+                    '*** Unknown value for multimailhook.commitEmailFormat: {0!s}\n'.format(
+                    commit_email_format) +
                     '*** Expected either "text" or "html".  Ignoring.\n'
                     )
             else:
@@ -2403,8 +2399,7 @@ class ConfigOptionsEnvironmentMixin(ConfigEnvironmentMixin):
                 self.maxcommitemails = int(maxcommitemails)
             except ValueError:
                 self.log_warning(
-                    '*** Malformed value for multimailhook.maxCommitEmails: %s\n'
-                    % maxcommitemails +
+                    '*** Malformed value for multimailhook.maxCommitEmails: {0!s}\n'.format(maxcommitemails) +
                     '*** Expected a number.  Ignoring.\n'
                     )
 
@@ -2473,7 +2468,7 @@ class ConfigOptionsEnvironmentMixin(ConfigEnvironmentMixin):
             else:
                 return ''
         else:
-            return '[%s] ' % (self.get_repo_shortname(),)
+            return '[{0!s}] '.format(self.get_repo_shortname())
 
     def get_sender(self):
         return self.config.get('envelopesender')
@@ -2659,7 +2654,7 @@ class PusherDomainEnvironmentMixin(ConfigEnvironmentMixin):
     def get_pusher_email(self):
         if self.__emaildomain:
             # Derive the pusher's full email address in the default way:
-            return '%s@%s' % (self.get_pusher(), self.__emaildomain)
+            return '{0!s}@{1!s}'.format(self.get_pusher(), self.__emaildomain)
         else:
             return super(PusherDomainEnvironmentMixin, self).get_pusher_email()
 
@@ -2768,7 +2763,7 @@ class StaticRefFilterEnvironmentMixin(Environment):
             self.__compiled_regex = re.compile(ref_filter_regex)
         except Exception:
             raise ConfigurationException(
-                'Invalid Ref Filter Regex "%s": %s' % (ref_filter_regex, sys.exc_info()[1]))
+                'Invalid Ref Filter Regex "{0!s}": {1!s}'.format(ref_filter_regex, sys.exc_info()[1]))
 
         if ref_filter_do_send_regex and ref_filter_dont_send_regex:
             raise ConfigurationException(
@@ -2786,8 +2781,7 @@ class StaticRefFilterEnvironmentMixin(Environment):
                 self.__send_compiled_regex = re.compile(ref_filter_send_regex)
             except Exception:
                 raise ConfigurationException(
-                    'Invalid Ref Filter Regex "%s": %s' %
-                    (ref_filter_send_regex, sys.exc_info()[1]))
+                    'Invalid Ref Filter Regex "{0!s}": {1!s}'.format(ref_filter_send_regex, sys.exc_info()[1]))
         else:
             self.__send_compiled_regex = self.__compiled_regex
             self.__is_do_send_filter = self.__is_inclusion_filter
@@ -3189,7 +3183,7 @@ class Push(object):
             ref_filter_regex, is_inclusion_filter = \
                 self.environment.get_ref_filter_regex()
             for line in read_git_lines(
-                    ['for-each-ref', '--format=%s' % (fmt,)]):
+                    ['for-each-ref', '--format={0!s}'.format(fmt)]):
                 (sha1, type, name) = line.split(' ', 2)
                 if (sha1 and type == 'commit' and
                         name not in updated_refs and
@@ -3342,7 +3336,7 @@ class Push(object):
             else:
                 if not change.environment.quiet:
                     change.environment.log_msg(
-                        'Sending notification emails to: %s\n' % (change.recipients,))
+                        'Sending notification emails to: {0!s}\n'.format(change.recipients))
                 extra_values = {'send_date': next(send_date)}
 
                 rev = change.send_single_combined_email(sha1s)
@@ -3363,9 +3357,9 @@ class Push(object):
             max_emails = change.environment.maxcommitemails
             if max_emails and len(sha1s) > max_emails:
                 change.environment.log_warning(
-                    '*** Too many new commits (%d), not sending commit emails.\n' % len(sha1s) +
+                    '*** Too many new commits ({0:d}), not sending commit emails.\n'.format(len(sha1s)) +
                     '*** Try setting multimailhook.maxCommitEmails to a greater value\n' +
-                    '*** Currently, multimailhook.maxCommitEmails=%d\n' % max_emails
+                    '*** Currently, multimailhook.maxCommitEmails={0:d}\n'.format(max_emails)
                     )
                 return
 
@@ -3455,7 +3449,7 @@ def choose_mailer(config, environment):
         mailer = SendMailer(command=command, envelopesender=environment.get_sender())
     else:
         environment.log_error(
-            'fatal: multimailhook.mailer is set to an incorrect value: "%s"\n' % mailer +
+            'fatal: multimailhook.mailer is set to an incorrect value: "{0!s}"\n'.format(mailer) +
             'please use one of "smtp" or "sendmail".\n'
             )
         sys.exit(1)
@@ -3534,7 +3528,7 @@ def get_version():
             if git_version == __version__:
                 return git_version
             else:
-                return '%s (%s)' % (__version__, git_version)
+                return '{0!s} ({1!s})'.format(__version__, git_version)
         except:
             pass
     finally:
@@ -3728,7 +3722,7 @@ def main(args):
         if options.show_env:
             sys.stderr.write('Environment values:\n')
             for (k, v) in sorted(environment.get_values().items()):
-                sys.stderr.write('    %s : %r\n' % (k, v))
+                sys.stderr.write('    {0!s} : {1!r}\n'.format(k, v))
             sys.stderr.write('\n')
 
         if options.stdout or environment.stdout:
