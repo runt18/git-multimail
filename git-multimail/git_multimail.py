@@ -883,7 +883,7 @@ class Change(object):
             for line in lines:
                 yield line
 
-    def generate_email(self, push, body_filter=None, extra_header_values={}):
+    def generate_email(self, push, body_filter=None, extra_header_values=None):
         """Generate an email describing this change.
 
         Iterate over the lines (including the header lines) of an
@@ -894,6 +894,8 @@ class Change(object):
         The extra_header_values field is received as a dict and not as
         **kwargs, to allow passing other keyword arguments in the
         future (e.g. passing extra values to generate_email_intro()"""
+        if extra_header_values is None:
+            extra_header_values = {}
 
         for line in self.generate_email_header(**extra_header_values):
             yield line
@@ -1056,7 +1058,9 @@ class Revision(Change):
     def generate_email_footer(self):
         return self.expand_lines(REVISION_FOOTER_TEMPLATE)
 
-    def generate_email(self, push, body_filter=None, extra_header_values={}):
+    def generate_email(self, push, body_filter=None, extra_header_values=None):
+        if extra_header_values is None:
+            extra_header_values = {}
         self._contains_diff()
         return Change.generate_email(self, push, body_filter, extra_header_values)
 
@@ -1206,7 +1210,7 @@ class ReferenceChange(Change):
 
         return None
 
-    def generate_combined_email(self, push, revision, body_filter=None, extra_header_values={}):
+    def generate_combined_email(self, push, revision, body_filter=None, extra_header_values=None):
         """Generate an email describing this change AND specified revision.
 
         Iterate over the lines (including the header lines) of an
@@ -1219,6 +1223,8 @@ class ReferenceChange(Change):
         future (e.g. passing extra values to generate_email_intro()
 
         This method is overridden in BranchChange."""
+        if extra_header_values is None:
+            extra_header_values = {}
 
         raise NotImplementedError
 
@@ -1615,7 +1621,9 @@ class BranchChange(ReferenceChange):
             # don't combine reference/revision emails:
             return None
 
-    def generate_combined_email(self, push, revision, body_filter=None, extra_header_values={}):
+    def generate_combined_email(self, push, revision, body_filter=None, extra_header_values=None):
+        if extra_header_values is None:
+            extra_header_values = {}
         values = revision.get_values()
         if extra_header_values:
             values.update(extra_header_values)
